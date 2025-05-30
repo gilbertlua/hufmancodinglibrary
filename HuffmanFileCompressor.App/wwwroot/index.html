@@ -1,0 +1,591 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive Management UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* Custom font for a clean look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Lighter gray background */
+        }
+        /* Basic styling for focus states */
+        input:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.5); /* Grey shadow on focus */
+        }
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent black overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+        /* Chart specific styles */
+        .chart-modal-container { /* Renamed from aggregate-chart-container for clarity */
+            width: 100%;
+            height: 300px; /* Increased height for better chart visibility */
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e0e0e0; /* Latar belakang abu-abu untuk grafik */
+            border-radius: 8px;
+            padding: 8px;
+            overflow-x: auto; /* Allow horizontal scrolling if many archives */
+        }
+        .chart-tooltip {
+            position: absolute;
+            text-align: center;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center py-8 px-4">
+<div class="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-3xl font-bold text-center text-gray-900 mb-8">Archive System</h1>
+
+    <div class="text-center mb-8 flex justify-center gap-4">
+        <button id="openModalBtn"
+                class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            Add New Archive
+        </button>
+        <button id="openChartModalBtn"
+                class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            View Compression Chart
+        </button>
+    </div>
+
+    <div class="p-4 bg-gray-50 rounded-md">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Archived Files</h2>
+
+        <div class="flex flex-col sm:flex-row gap-4 mb-4">
+            <input type="text" id="searchInput" placeholder="Search by name..."
+                   class="flex-grow px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-gray-400 focus:border-gray-400">
+            <select id="sortSelect"
+                    class="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:ring-gray-400 focus:border-gray-400">
+                <option value="created_desc">Created (Newest First)</option>
+                <option value="created_asc">Created (Oldest First)</option>
+                <option value="name_asc">Name (A-Z)</option>
+                <option value="name_desc">Name (Z-A)</option>
+                <option value="originalSize_desc">Original Size (High to Low)</option>
+                <option value="originalSize_asc">Original Size (Low to High)</option>
+                <option value="compressedSize_desc">Compressed Size (High to Low)</option>
+                <option value="compressedSize_asc">Compressed Size (Low to High)</option>
+            </select>
+        </div>
+
+        <div id="archiveList" class="space-y-3">
+            <p class="text-gray-500 text-center text-sm" id="loadingMessage">Loading archived files...</p>
+        </div>
+        <div id="listMessage" class="mt-3 text-center text-sm font-medium"></div>
+    </div>
+</div>
+
+<div id="compressModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">Compress New File</h2>
+            <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <form id="compressForm" class="space-y-4">
+            <div>
+                <label for="archiveName" class="block text-sm font-medium text-gray-700 mb-1">Archive Name:</label>
+                <input type="text" id="archiveName" name="name" required
+                       class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-gray-400 focus:border-gray-400">
+            </div>
+            <div>
+                <label for="fileToCompress" class="block text-sm font-medium text-gray-700 mb-1">Select File:</label>
+                <input type="file" id="fileToCompress" name="file" required
+                       class="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-800">
+            </div>
+            <button type="submit"
+                    class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-700 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                Compress
+            </button>
+            <div id="compressMessage" class="mt-3 text-center text-sm font-medium"></div>
+        </form>
+    </div>
+</div>
+
+<div id="chartModal" class="modal-overlay">
+    <div class="modal-content max-w-xl"> <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-800">Compression Comparison Chart</h2>
+        <button id="closeChartModalBtn" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+        <div id="chartVisualizationContainer" class="chart-modal-container">
+            <p class="text-gray-600 text-sm">No data to display chart.</p>
+        </div>
+        <div id="chartTooltip" class="chart-tooltip"></div>
+    </div>
+</div>
+
+<script>
+    // Base URL for your API
+    const API_BASE_URL = "http://localhost:5191/api/archives";
+
+    // Get references to DOM elements
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const compressModal = document.getElementById('compressModal');
+    const compressForm = document.getElementById('compressForm');
+    const archiveList = document.getElementById('archiveList');
+    const compressMessage = document.getElementById('compressMessage');
+    const listMessage = document.getElementById('listMessage');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+
+    // Chart Modal Elements
+    const openChartModalBtn = document.getElementById('openChartModalBtn');
+    const closeChartModalBtn = document.getElementById('closeChartModalBtn');
+    const chartModal = document.getElementById('chartModal');
+    const chartVisualizationContainer = document.getElementById('chartVisualizationContainer');
+    const chartTooltip = document.getElementById('chartTooltip');
+
+    let allArchives = []; // To store all fetched archives for filtering/sorting
+
+    /**
+     * Menampilkan pesan kepada pengguna untuk durasi singkat.
+     * @param {HTMLElement} element - Elemen DOM untuk menampilkan pesan.
+     * @param {string} message - Teks pesan.
+     * @param {string} type - 'success' atau 'error' untuk styling.
+     */
+    function showMessage(element, message, type) {
+        element.textContent = message;
+        element.className = `mt-3 text-center text-sm font-medium text-gray-700`;
+        setTimeout(() => {
+            element.textContent = '';
+            element.className = '';
+        }, 5000); // Pesan menghilang setelah 5 detik
+    }
+
+    /**
+     * Membuka modal kompresi.
+     */
+    function openCompressModal() {
+        compressModal.classList.add('show');
+        compressMessage.textContent = ''; // Hapus pesan sebelumnya di modal
+    }
+
+    /**
+     * Menutup modal kompresi.
+     */
+    function closeCompressModal() {
+        compressModal.classList.remove('show');
+    }
+
+    /**
+     * Membuka modal grafik.
+     */
+    function openChartModal() {
+        chartModal.classList.add('show');
+        // Draw the chart when the modal is opened
+        drawAllArchivesComparisonChart(allArchives);
+    }
+
+    /**
+     * Menutup modal grafik.
+     */
+    function closeChartModal() {
+        chartModal.classList.remove('show');
+    }
+
+    // Event listeners untuk kontrol modal kompresi
+    openModalBtn.addEventListener('click', openCompressModal);
+    closeModalBtn.addEventListener('click', closeCompressModal);
+    // Tutup modal kompresi jika pengguna mengklik di luar konten modal
+    compressModal.addEventListener('click', (e) => {
+        if (e.target === compressModal) {
+            closeCompressModal();
+        }
+    });
+
+    // Event listeners untuk kontrol modal grafik
+    openChartModalBtn.addEventListener('click', openChartModal);
+    closeChartModalBtn.addEventListener('click', closeChartModal);
+    // Tutup modal grafik jika pengguna mengklik di luar konten modal
+    chartModal.addEventListener('click', (e) => {
+        if (e.target === chartModal) {
+            closeChartModal();
+        }
+    });
+
+    /**
+     * Merender daftar arsip berdasarkan array yang disediakan.
+     * @param {Array} archivesToRender - Array arsip yang akan ditampilkan.
+     */
+    function renderArchives(archivesToRender) {
+        archiveList.innerHTML = ''; // Hapus daftar yang ada
+
+        if (archivesToRender.length === 0) {
+            archiveList.innerHTML = '<p class="text-gray-500 text-center text-sm">Tidak ada arsip yang cocok ditemukan.</p>';
+            return;
+        }
+
+        archivesToRender.forEach(archive => {
+            const createdDate = new Date(archive.created).toLocaleString(); // Format tanggal agar mudah dibaca
+            const archiveItem = document.createElement('div');
+            archiveItem.className = 'flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 rounded-md shadow-sm border border-gray-200';
+            archiveItem.innerHTML = `
+                    <div class="flex-grow mb-2 sm:mb-0">
+                        <span class="text-sm font-medium text-gray-800 block">${archive.name || 'Unnamed Archive'} (ID: ${archive.id})</span>
+                        <span class="text-xs text-gray-600 block">
+                            Ukuran Asli: ${archive.originalSize} bytes | Ukuran Terkompresi: ${archive.compressedSize} bytes
+                        </span>
+                        <span class="text-xs text-gray-600 block">
+                            Dibuat: ${createdDate}
+                        </span>
+                    </div>
+                    <button data-id="${archive.id}"
+                            class="delete-btn px-3 py-1.5 bg-gray-500 text-white rounded-md text-xs hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 self-end sm:self-auto">
+                        Hapus
+                    </button>
+                `;
+            archiveList.appendChild(archiveItem);
+        });
+
+        // Lampirkan kembali event listener ke tombol hapus untuk item yang baru dirender
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', handleDelete);
+        });
+    }
+
+    /**
+     * Menggambar grafik perbandingan ukuran asli dan terkompresi untuk setiap arsip.
+     * @param {Array} archivesData - Array arsip yang akan digambar.
+     */
+    function drawAllArchivesComparisonChart(archivesData) {
+        const container = chartVisualizationContainer; // Use the new chart modal container
+        if (!container) return;
+
+        // Clear previous chart
+        d3.select(container).select("svg").remove();
+        container.innerHTML = ''; // Clear any loading messages
+
+        if (archivesData.length === 0) {
+            container.innerHTML = '<p class="text-gray-600 text-sm">No data to display chart.</p>';
+            return;
+        }
+
+        const margin = { top: 20, right: 30, bottom: 30, left: 60 };
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        // Adjust width based on number of archives to prevent overcrowding
+        const itemWidth = 50; // Increased width allocated per archive for better spacing
+        const calculatedWidth = Math.max(containerWidth, archivesData.length * itemWidth + margin.left + margin.right);
+
+        const width = calculatedWidth - margin.left - margin.right;
+        const height = containerHeight - margin.top - margin.bottom;
+
+        const svg = d3.select(container)
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const maxOverallSize = d3.max(archivesData, d => Math.max(d.originalSize || 0, d.compressedSize || 0));
+
+        const xScale = d3.scaleBand()
+            .domain(archivesData.map(d => d.id)) // Use archive ID for x-axis
+            .range([0, width])
+            .padding(0.5);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, maxOverallSize * 1.1]) // Add 10% padding to top of y-axis
+            .range([height, 0]);
+
+        // Add X axis
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(xScale).tickFormat(d => archivesData.find(a => a.id === d)?.name || d)) // Show name or ID
+            .selectAll("text")
+            .attr("transform", "rotate(-45)")
+            .style("text-anchor", "end")
+            .attr("font-size", "9px")
+            .attr("fill", "#555");
+
+        // Add Y axis
+        svg.append("g")
+            .call(d3.axisLeft(yScale).tickFormat(d => `${d} bytes`))
+            .attr("font-size", "10px")
+            .attr("fill", "#555");
+
+        // Y-axis label
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - margin.left + 15)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .attr("font-size", "11px")
+            .attr("fill", "#333")
+            .text("Size (bytes)");
+
+        // Lines connecting original and compressed sizes (Dumbbell chart lines)
+        svg.selectAll(".compression-line")
+            .data(archivesData)
+            .enter().append("line")
+            .attr("class", "compression-line")
+            .attr("x1", d => xScale(d.id) + xScale.bandwidth() / 2)
+            .attr("y1", d => yScale(d.originalSize))
+            .attr("x2", d => xScale(d.id) + xScale.bandwidth() / 2)
+            .attr("y2", d => yScale(d.compressedSize))
+            .attr("stroke", "#4CAF50") // Green line for compression
+            .attr("stroke-width", 1.5);
+
+        // Circles for Original Size
+        svg.selectAll(".original-circle")
+            .data(archivesData)
+            .enter().append("circle")
+            .attr("class", "original-circle")
+            .attr("cx", d => xScale(d.id) + xScale.bandwidth() / 2)
+            .attr("cy", d => yScale(d.originalSize))
+            .attr("r", 5)
+            .attr("fill", "#FF5722") // Orange for original size
+            .on("mouseover", function(event, d) {
+                chartTooltip.style.opacity = 1;
+                chartTooltip.innerHTML = `<strong>${d.name}</strong><br>Original: ${d.originalSize} bytes`;
+                chartTooltip.style.left = (event.pageX + 10) + 'px';
+                chartTooltip.style.top = (event.pageY - 20) + 'px';
+            })
+            .on("mouseout", function() {
+                chartTooltip.style.opacity = 0;
+            });
+
+        // Circles for Compressed Size
+        svg.selectAll(".compressed-circle")
+            .data(archivesData)
+            .enter().append("circle")
+            .attr("class", "compressed-circle")
+            .attr("cx", d => xScale(d.id) + xScale.bandwidth() / 2)
+            .attr("cy", d => yScale(d.compressedSize))
+            .attr("r", 5)
+            .attr("fill", "#2196F3") // Blue for compressed size
+            .on("mouseover", function(event, d) {
+                chartTooltip.style.opacity = 1;
+                chartTooltip.innerHTML = `<strong>${d.name}</strong><br>Compressed: ${d.compressedSize} bytes`;
+                chartTooltip.style.left = (event.pageX + 10) + 'px';
+                chartTooltip.style.top = (event.pageY - 20) + 'px';
+            })
+            .on("mouseout", function() {
+                chartTooltip.style.opacity = 0;
+            });
+    }
+
+
+    /**
+     * Memfilter dan mengurutkan array allArchives, lalu memanggil renderArchives.
+     */
+    function applyFiltersAndSort() {
+        let filteredArchives = [...allArchives]; // Mulai dengan salinan semua arsip
+
+        // Terapkan filter pencarian
+        const searchTerm = searchInput.value.toLowerCase();
+        if (searchTerm) {
+            filteredArchives = filteredArchives.filter(archive =>
+                (archive.name && archive.name.toLowerCase().includes(searchTerm))
+            );
+        }
+
+        // Terapkan pengurutan
+        const sortOption = sortSelect.value;
+        filteredArchives.sort((a, b) => {
+            switch (sortOption) {
+                case 'created_desc':
+                    return new Date(b.created) - new Date(a.created);
+                case 'created_asc':
+                    return new Date(a.created) - new Date(b.created);
+                case 'name_asc':
+                    return (a.name || '').localeCompare(b.name || '');
+                case 'name_desc':
+                    return (b.name || '').localeCompare(a.name || '');
+                case 'originalSize_desc':
+                    return b.originalSize - a.originalSize;
+                case 'originalSize_asc':
+                    return a.originalSize - b.originalSize;
+                case 'compressedSize_desc':
+                    return b.compressedSize - a.compressedSize;
+                case 'compressedSize_asc':
+                    return a.compressedSize - b.compressedSize;
+                default:
+                    return 0;
+            }
+        });
+
+        renderArchives(filteredArchives);
+        // Grafik akan digambar saat modal grafik dibuka, jadi tidak perlu memanggilnya di sini.
+    }
+
+
+    /**
+     * Mengambil semua arsip dari API dan menyimpannya.
+     */
+    async function fetchArchives() {
+        archiveList.innerHTML = ''; // Hapus daftar yang ada
+        loadingMessage.style.display = 'block'; // Tampilkan pesan loading
+        listMessage.textContent = ''; // Hapus pesan sebelumnya
+        chartVisualizationContainer.innerHTML = '<p class="text-gray-600 text-sm">Loading chart data...</p>'; // Tampilkan pesan loading untuk grafik
+
+        try {
+            const response = await fetch(API_BASE_URL);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            allArchives = await response.json(); // Simpan semua arsip
+            loadingMessage.style.display = 'none'; // Sembunyikan pesan loading
+
+            applyFiltersAndSort(); // Render daftar arsip dengan filter/pengurutan saat ini
+            // drawAllArchivesComparisonChart(allArchives); // Don't draw here, draw when modal is opened
+        } catch (error) {
+            console.error('Error fetching archives:', error);
+            loadingMessage.style.display = 'none'; // Sembunyikan pesan loading
+            chartVisualizationContainer.innerHTML = '<p class="text-red-500 text-sm">Failed to load chart data.</p>'; // Pesan error untuk grafik
+            listMessage.textContent = 'Gagal memuat arsip.';
+            listMessage.className = 'mt-3 text-center text-sm font-medium text-gray-700';
+        }
+    }
+
+    /**
+     * Menangani pengiriman formulir kompresi.
+     * @param {Event} event - Event pengiriman formulir.
+     */
+    compressForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); // Mencegah pengiriman formulir default
+
+        const archiveNameInput = document.getElementById('archiveName');
+        const fileInput = document.getElementById('fileToCompress');
+
+        const name = archiveNameInput.value;
+        const file = fileInput.files[0];
+
+        if (!name || !file) {
+            showMessage(compressMessage, 'Harap isi kedua bidang.', 'error');
+            return;
+        }
+
+        // Buat objek FormData untuk mengirim hanya file
+        const formData = new FormData();
+        formData.append('file', file);
+
+        compressMessage.textContent = 'Mengompresi...';
+        compressMessage.className = 'mt-3 text-center text-sm font-medium text-gray-700';
+
+        try {
+            // Buat URL dengan archiveName sebagai parameter query
+            const compressUrl = `${API_BASE_URL}/compress?archiveName=${encodeURIComponent(name)}`;
+
+            const response = await fetch(compressUrl, {
+                method: 'POST',
+                body: formData // FormData secara otomatis mengatur header Content-Type
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            const result = await response.json();
+            showMessage(compressMessage, `Berhasil dikompresi! ID: ${result.id || 'N/A'}`, 'success');
+
+            // Hapus formulir
+            archiveNameInput.value = '';
+            fileInput.value = ''; // Hapus file yang dipilih
+            closeCompressModal(); // Tutup modal setelah kompresi berhasil
+
+            // Perbarui daftar arsip
+            fetchArchives(); // Ini akan mengambil dan merender ulang dengan filter/pengurutan
+
+        } catch (error) {
+            console.error('Error compressing file:', error);
+            showMessage(compressMessage, `Gagal mengompresi: ${error.message}`, 'error');
+        }
+    });
+
+    /**
+     * Menangani penghapusan file arsip.
+     * @param {Event} event - Event klik dari tombol hapus.
+     */
+    async function handleDelete(event) {
+        const archiveId = event.target.dataset.id;
+        if (!archiveId) {
+            showMessage(listMessage, 'Error: ID Arsip tidak ditemukan.', 'error');
+            return;
+        }
+
+        // Konfirmasi sederhana (ganti dengan modal kustom di aplikasi produksi)
+        if (!confirm(`Hapus arsip ID: ${archiveId}?`)) {
+            return;
+        }
+
+        listMessage.textContent = 'Menghapus...';
+        listMessage.className = 'mt-3 text-center text-sm font-medium text-gray-700';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/${archiveId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            showMessage(listMessage, `Arsip ID ${archiveId} berhasil dihapus!`, 'success');
+
+            // Perbarui daftar arsip
+            fetchArchives(); // Ini akan mengambil dan merender ulang dengan filter/pengurutan
+
+        } catch (error) {
+            console.error('Error deleting archive:', error);
+            showMessage(listMessage, `Gagal menghapus: ${error.message}`, 'error');
+        }
+    }
+
+    // Event listeners untuk pencarian dan pengurutan
+    searchInput.addEventListener('input', applyFiltersAndSort);
+    sortSelect.addEventListener('change', applyFiltersAndSort);
+
+    // Pengambilan arsip awal saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', fetchArchives);
+</script>
+</body>
+</html>

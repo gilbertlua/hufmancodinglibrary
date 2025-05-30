@@ -1,0 +1,39 @@
+{
+  "Version": 1,
+  "Hash": "ChQFNICsc8JJAVQiczPfofEWFmGWE6lt52V55rfaQK8=",
+  "Source": "HuffmanFileCompressor.App",
+  "BasePath": "_content/HuffmanFileCompressor.App",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "HuffmanFileCompressor.App\\wwwroot",
+      "Source": "HuffmanFileCompressor.App",
+      "ContentRoot": "D:\\project\\002-2025\\dotnet\\HuffmanFileCompressor.App\\wwwroot\\",
+      "BasePath": "_content/HuffmanFileCompressor.App",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "D:\\project\\002-2025\\dotnet\\HuffmanFileCompressor.App\\wwwroot\\index.html",
+      "SourceId": "HuffmanFileCompressor.App",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\project\\002-2025\\dotnet\\HuffmanFileCompressor.App\\wwwroot\\",
+      "BasePath": "_content/HuffmanFileCompressor.App",
+      "RelativePath": "index.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\index.html"
+    }
+  ]
+}

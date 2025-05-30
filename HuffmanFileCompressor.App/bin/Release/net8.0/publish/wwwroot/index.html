@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive Management UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font for a clean look */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Lighter gray background */
+        }
+        /* Basic styling for focus states */
+        input:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); /* Blue shadow on focus */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center py-8 px-4">
+<div class="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Archive System</h1>
+
+    <div class="mb-8 p-4 bg-blue-50 rounded-md">
+        <h2 class="text-xl font-semibold text-blue-700 mb-4">Compress File</h2>
+        <form id="compressForm" class="space-y-4">
+            <div>
+                <label for="archiveName" class="block text-sm font-medium text-gray-700 mb-1">Archive Name:</label>
+                <input type="text" id="archiveName" name="name" required
+                       class="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label for="fileToCompress" class="block text-sm font-medium text-gray-700 mb-1">Select File:</label>
+                <input type="file" id="fileToCompress" name="file" required
+                       class="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600">
+            </div>
+            <button type="submit"
+                    class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Compress
+            </button>
+            <div id="compressMessage" class="mt-3 text-center text-sm font-medium"></div>
+        </form>
+    </div>
+
+    <div class="p-4 bg-purple-50 rounded-md">
+        <h2 class="text-xl font-semibold text-purple-700 mb-4">Archived Files</h2>
+        <div id="archiveList" class="space-y-3">
+            <p class="text-gray-500 text-center text-sm" id="loadingMessage">Loading archived files...</p>
+        </div>
+        <div id="listMessage" class="mt-3 text-center text-sm font-medium"></div>
+    </div>
+</div>
+
+<script>
+    // Base URL for your API
+    const API_BASE_URL = "http://localhost:5191/api/archives";
+
+    // Get references to DOM elements
+    const compressForm = document.getElementById('compressForm');
+    const archiveList = document.getElementById('archiveList');
+    const compressMessage = document.getElementById('compressMessage');
+    const listMessage = document.getElementById('listMessage');
+    const loadingMessage = document.getElementById('loadingMessage');
+
+    /**
+     * Displays a message to the user for a short duration.
+     * @param {HTMLElement} element - The DOM element to display the message in.
+     * @param {string} message - The message text.
+     * @param {string} type - 'success' or 'error' for styling.
+     */
+    function showMessage(element, message, type) {
+        element.textContent = message;
+        element.className = `mt-3 text-center text-sm font-medium ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
+        setTimeout(() => {
+            element.textContent = '';
+            element.className = '';
+        }, 5000); // Message disappears after 5 seconds
+    }
+
+    /**
+     * Fetches and displays the list of archived files.
+     */
+    async function fetchArchives() {
+        archiveList.innerHTML = ''; // Clear existing list
+        loadingMessage.style.display = 'block'; // Show loading message
+        listMessage.textContent = ''; // Clear previous messages
+
+        try {
+            const response = await fetch(API_BASE_URL);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const archives = await response.json();
+
+            loadingMessage.style.display = 'none'; // Hide loading message
+
+            if (archives.length === 0) {
+                archiveList.innerHTML = '<p class="text-gray-500 text-center text-sm">No archived files found.</p>';
+                return;
+            }
+
+            // Create list items for each archive
+            archives.forEach(archive => {
+                const archiveItem = document.createElement('div');
+                archiveItem.className = 'flex items-center justify-between bg-white p-3 rounded-md shadow-sm border border-gray-200';
+                archiveItem.innerHTML = `
+                        <span class="text-sm font-medium text-gray-800">${archive.name || 'Unnamed Archive'} (ID: ${archive.id})</span>
+                        <button data-id="${archive.id}"
+                                class="delete-btn px-3 py-1.5 bg-red-500 text-white rounded-md text-xs hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Delete
+                        </button>
+                    `;
+                archiveList.appendChild(archiveItem);
+            });
+
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', handleDelete);
+            });
+
+        } catch (error) {
+            console.error('Error fetching archives:', error);
+            loadingMessage.style.display = 'none'; // Hide loading message
+            listMessage.textContent = 'Failed to load archives.';
+            listMessage.className = 'mt-3 text-center text-sm font-medium text-red-600';
+        }
+    }
+
+    /**
+     * Handles the compression form submission.
+     * @param {Event} event - The form submission event.
+     */
+    compressForm.addEventListener('submit', async (event) => {
+        event.preventDefault(); // Prevent default form submission
+
+        const archiveNameInput = document.getElementById('archiveName');
+        const fileInput = document.getElementById('fileToCompress');
+
+        const name = archiveNameInput.value;
+        const file = fileInput.files[0];
+
+        if (!name || !file) {
+            showMessage(compressMessage, 'Please fill in both fields.', 'error');
+            return;
+        }
+
+        // Create FormData object to send file and text data
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('file', file);
+
+        compressMessage.textContent = 'Compressing...';
+        compressMessage.className = 'mt-3 text-center text-sm font-medium text-blue-600';
+
+        try {
+            const response = await fetch(API_BASE_URL, {
+                method: 'POST',
+                body: formData // FormData automatically sets Content-Type header
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            const result = await response.json();
+            showMessage(compressMessage, `Compressed successfully! ID: ${result.id || 'N/A'}`, 'success');
+
+            // Clear the form
+            archiveNameInput.value = '';
+            fileInput.value = ''; // Clear selected file
+
+            // Refresh the list of archives
+            fetchArchives();
+
+        } catch (error) {
+            console.error('Error compressing file:', error);
+            showMessage(compressMessage, `Failed to compress: ${error.message}`, 'error');
+        }
+    });
+
+    /**
+     * Handles the deletion of an archived file.
+     * @param {Event} event - The click event from the delete button.
+     */
+    async function handleDelete(event) {
+        const archiveId = event.target.dataset.id;
+        if (!archiveId) {
+            showMessage(listMessage, 'Error: Archive ID not found.', 'error');
+            return;
+        }
+
+        // Simple confirmation (replace with a custom modal in a production app)
+        if (!confirm(`Delete archive ID: ${archiveId}?`)) {
+            return;
+        }
+
+        listMessage.textContent = 'Deleting...';
+        listMessage.className = 'mt-3 text-center text-sm font-medium text-blue-600';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/${archiveId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            showMessage(listMessage, `Archive ID ${archiveId} deleted!`, 'success');
+
+            // Refresh the list of archives
+            fetchArchives();
+
+        } catch (error) {
+            console.error('Error deleting archive:', error);
+            showMessage(listMessage, `Failed to delete: ${error.message}`, 'error');
+        }
+    }
+
+    // Initial fetch of archives when the page loads
+    document.addEventListener('DOMContentLoaded', fetchArchives);
+</script>
+</body>
+</html>

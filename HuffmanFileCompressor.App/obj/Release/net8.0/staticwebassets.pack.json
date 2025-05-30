@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\project\\002-2025\\dotnet\\HuffmanFileCompressor.App\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.HuffmanFileCompressor.App.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.build.HuffmanFileCompressor.App.props",
+      "PackagePath": "build\\HuffmanFileCompressor.App.props"
+    },
+    {
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.HuffmanFileCompressor.App.props",
+      "PackagePath": "buildMultiTargeting\\HuffmanFileCompressor.App.props"
+    },
+    {
+      "Id": "obj\\Release\\net8.0\\staticwebassets\\msbuild.buildTransitive.HuffmanFileCompressor.App.props",
+      "PackagePath": "buildTransitive\\HuffmanFileCompressor.App.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

@@ -1,0 +1,12 @@
+D:\project\002-2025\dotnet\HuffmanFileCompressor\bin\Debug\net8.0\HuffmanFileCompressor.deps.json
+D:\project\002-2025\dotnet\HuffmanFileCompressor\bin\Debug\net8.0\HuffmanFileCompressor.dll
+D:\project\002-2025\dotnet\HuffmanFileCompressor\bin\Debug\net8.0\HuffmanFileCompressor.pdb
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\HuffmanFileCompressor.csproj.AssemblyReference.cache
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\HuffmanFileCompressor.GeneratedMSBuildEditorConfig.editorconfig
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\HuffmanFileCompressor.AssemblyInfoInputs.cache
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\HuffmanFileCompressor.AssemblyInfo.cs
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\HuffmanFileCompressor.csproj.CoreCompileInputs.cache
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\HuffmanFileCompressor.dll
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\refint\HuffmanFileCompressor.dll
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\HuffmanFileCompressor.pdb
+D:\project\002-2025\dotnet\HuffmanFileCompressor\obj\Debug\net8.0\ref\HuffmanFileCompressor.dll
