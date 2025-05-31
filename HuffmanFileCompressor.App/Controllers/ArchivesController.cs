@@ -26,6 +26,8 @@ namespace HuffmanFileCompressor.App.Controllers
 
             if (!Directory.Exists(_storagePath))
                 Directory.CreateDirectory(_storagePath);
+            if (!Directory.Exists(_decompressionPath))
+                Directory.CreateDirectory(_decompressionPath);
 
             _logger.LogInformation("ArchivesController created."); // Use the injected logger
         }
@@ -93,14 +95,9 @@ namespace HuffmanFileCompressor.App.Controllers
             try
             {
                 var query = await _context.Archives.FindAsync(id);
-                if (query == null)
-                {
-                    _logger.LogWarning("Decompression failed: Archive with ID {ArchiveId} was found by AnyAsync but not by FindAsync.", id);
-                    return NotFound($"Archive with ID {id} not found for decompression.");
-                }
-
-                _logger.LogInformation("Attempting to decompress file from {InputPath} to {OutputPath}", query.Path, _decompressionPath);
-                DecompressionResult result = _huffmanFileCompressor.DecompressFile(query.Path, _decompressionPath);
+                string outputFileName = Path.Combine(_decompressionPath, $"{query!.Name}{query.Extension}");
+                _logger.LogInformation("Attempting to decompress file from {InputPath} to {OutputPath}", query.Path, outputFileName);
+                DecompressionResult result = _huffmanFileCompressor.DecompressFile(query.Path, outputFileName);
 
                 if (!result.IsSuccess)
                 {
