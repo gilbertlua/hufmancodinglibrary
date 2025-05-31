@@ -1,5 +1,7 @@
+D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\log4net.config
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\appsettings.Development.json
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\appsettings.json
+D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\HuffmanFileCompressor.App.staticwebassets.runtime.json
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\HuffmanFileCompressor.App.exe
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\HuffmanFileCompressor.App.deps.json
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\HuffmanFileCompressor.App.runtimeconfig.json
@@ -150,6 +152,7 @@ D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\HuffmanFil
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\HuffmanFileCompressor.App.csproj.CoreCompileInputs.cache
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\HuffmanFileCompressor.App.MvcApplicationPartsAssemblyInfo.cs
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\HuffmanFileCompressor.App.MvcApplicationPartsAssemblyInfo.cache
+D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\HuffmanFileCompressor.App.sourcelink.json
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\staticwebassets.build.json
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\staticwebassets.development.json
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\staticwebassets\msbuild.HuffmanFileCompressor.App.Microsoft.AspNetCore.StaticWebAssets.props
@@ -164,4 +167,4 @@ D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\refint\Huf
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\HuffmanFileCompressor.App.pdb
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\HuffmanFileCompressor.App.genruntimeconfig.cache
 D:\project\002-2025\dotnet\HuffmanFileCompressor.App\obj\Debug\net8.0\ref\HuffmanFileCompressor.App.dll
-D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\HuffmanFileCompressor.App.staticwebassets.runtime.json
+D:\project\002-2025\dotnet\HuffmanFileCompressor.App\bin\Debug\net8.0\Microsoft.Extensions.Logging.Log4Net.AspNetCore.dll

@@ -20,6 +20,7 @@ public class ApplicationDbContext:DbContext
                 Id = 1,
                 Name = "Archive 1 file",
                 Path = "Archive 1 file",
+                Extension = "PDF",
                 OriginalSize = 100,
                 CompressedSize = 100,
                 Created = new DateTime(2025, 5, 27, 15, 10, 45),

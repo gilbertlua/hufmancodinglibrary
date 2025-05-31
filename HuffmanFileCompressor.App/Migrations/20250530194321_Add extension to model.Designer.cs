@@ -3,6 +3,7 @@ using System;
 using HuffmanFileCompressor.App.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HuffmanFileCompressor.App.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250530194321_Add extension to model")]
+    partial class Addextensiontomodel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.5");
@@ -29,17 +32,14 @@ namespace HuffmanFileCompressor.App.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Extension")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Extension")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Modified")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("OriginalSize")
@@ -47,7 +47,6 @@ namespace HuffmanFileCompressor.App.Migrations
 
                     b.Property<string>("Path")
                         .IsRequired()
-                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -60,7 +59,7 @@ namespace HuffmanFileCompressor.App.Migrations
                             Id = 1,
                             CompressedSize = 100,
                             Created = new DateTime(2025, 5, 27, 15, 10, 45, 0, DateTimeKind.Unspecified),
-                            Extension = "PDF",
+                            Extension = 0,
                             Modified = new DateTime(2025, 5, 27, 15, 10, 45, 0, DateTimeKind.Unspecified),
                             Name = "Archive 1 file",
                             OriginalSize = 100,
